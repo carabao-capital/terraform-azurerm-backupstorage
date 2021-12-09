@@ -1,28 +1,9 @@
-data "azurerm_subscription" "current" {}
-
-resource "azurerm_resource_group" "backup" {
-  name     = "rg-${var.name}"
-  location = var.location
-
-  lifecycle {
-    ignore_changes = [
-      tags,
-    ]
-  }
-}
-
-resource "random_id" "storageaccount" {
-  keepers = {
-    rg_name     = azurerm_resource_group.backup.name
-    rg_location = azurerm_resource_group.backup.location
-  }
-  byte_length = 11
-}
-
 resource "azurerm_storage_account" "backup" {
-  name                     = "sa${random_id.storageaccount.hex}"
-  resource_group_name      = azurerm_resource_group.backup.name
-  location                 = azurerm_resource_group.backup.location
+  name                = replace("${var.resource_group_name}-backup", "/[^a-z0-9]/", "")
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  account_kind             = var.account_kind
   account_tier             = var.account_tier
   account_replication_type = var.account_replication_type
 
@@ -32,16 +13,17 @@ resource "azurerm_storage_account" "backup" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes = [
-      tags,
-    ]
   }
+
+  tags = var.tags
 }
 
-resource "azurerm_storage_container" "velero" {
-  name                  = var.bucket
+resource "azurerm_storage_container" "backup" {
+  for_each = var.buckets
+
+  name                  = each.value.name
   storage_account_name  = azurerm_storage_account.backup.name
-  container_access_type = "private"
+  container_access_type = each.value.container_access_type
 
   lifecycle {
     prevent_destroy = true
