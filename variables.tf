@@ -1,12 +1,22 @@
-variable "location" {
-  description = "Location where the backup storage will be created."
+variable "resource_group_name" {
+  description = "Resource group name"
   type        = string
 }
 
-variable "name" {
-  description = "Name of the resource group where the storage will be created, gets prefixed with 'rg-'."
+variable "location" {
+  description = "Azure Region"
   type        = string
-  default     = "velero"
+}
+
+variable "tags" {
+  description = "Tags to be applied to resources (inclusive)"
+  type        = map(string)
+}
+
+variable "account_kind" {
+  description = "Account tier of the storage account that will be created."
+  type        = string
+  default     = "StorageV2"
 }
 
 variable "account_tier" {
@@ -21,8 +31,10 @@ variable "account_replication_type" {
   default     = "LRS"
 }
 
-variable "bucket" {
-  description = "Bucket that will be created for Velero."
-  type        = string
-  default     = "velero"
+variable "buckets" {
+  description = "Bucket that will be created."
+  type = map(object({
+    container_access_type = string
+  }))
+  default = {}
 }
